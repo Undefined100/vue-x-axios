@@ -1,7 +1,7 @@
 {
   "name": "vue-x-axios",
   "description": "基于axios的通用异步请求工具。",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "undefined100 <946424684@qq.com>",
   "license": "MIT",
   "private": false,

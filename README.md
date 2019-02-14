@@ -1,4 +1,6 @@
-> 基于axios的通用异步请求工具。
+# vue-x-axios
+
+> 基于axios扩展的Vue异步请求插件，为前端实现API统一管理的解决方案。
 
 ## 安装
 
@@ -25,46 +27,46 @@ Vue.use($api, {
 
   // 请求拦截器
   requestIntercept(config){
-    // 你的处理逻辑
+    // 自定义处理逻辑
   },
 
   // 响应拦截器
   responseSuccIntercept(resp){
-    // 你的处理逻辑
+    // 自定义处理逻辑
   },
 
   // 响应异常拦截器
-  responseErrorIntercept(resp){
-    // 你的处理逻辑
+  responseErrorIntercept(err){
+    // 自定义处理逻辑
   },
 
   // API配置信息
   apiConfig：[{
-      name: '基础数据接口V1版本',
-      method: 'dataV1',
-      url: '/api/v1/basic/data',
-      type: 'get'
-    }, {
-      name: '基础数据接口V2版本',
-      method: 'dataV2',
-      url: '/api/v2/basic/data',
-      type: 'get'
-    }, {
-      name: '执行接口',
-      method: 'dataV2',
-      url: '/api/v2/basic/data/execute',
-      type: 'post'，
-      /*静态参数*/
-      data:{
-        lcontent:'测试数据' //请求体参数
-      }，
-      params:{
-        key:'i_s_sys_log'// url参数
-      }
+    name: '基础数据接口V1版本',
+    method: 'dataV1',
+    url: '/api/v1/basic/data',
+    type: 'get'
+  }, {
+    name: '基础数据接口V2版本',
+    method: 'dataV2',
+    url: '/api/v2/basic/data',
+    type: 'get'
+  }, {
+    name: '执行接口',
+    method: 'dataV2',
+    url: 'https://some-domain2.com//api/v2/basic/data/execute',
+    type: 'post'，
+    /*静态参数*/
+    data:{
+      lcontent:'测试数据' //请求体参数
+    }，
+    params:{
+      key:'i_s_sys_log'// url参数
+    }
   }],
   // host配置，设置路由模块使用指定的host
   hosts: [{
-    'url': 'http://47.95.14.230:9208',
+    'url': 'https://some-domain.com/api/',
     'routeKeys': ['faf1b16f-8cf4-48ca-a4f5-0d8f2ba787a9'] // 路由名称，用到host配置时，需要将路由实例对象传进来
   }],
   // 路由实例对象
@@ -72,34 +74,86 @@ Vue.use($api, {
 })
 ```
 
-## 使用
+### 好的实践
 
-> 注册后在组件内，可以通过this.$api，当非组件环境中使用时，可以通过Vue.$api来使用。
+1、将API的配置统一在一个文件中进行管理
+2、在注册异步请求插件的地方，将API配置文件引入，进行注册
+如：
+```
+├── src
+│   ├── api.js // 接口配置文件
+│   ├── main.js
+```
+api.js文件内容，如下：
+
+```js
+export default
+[{
+  name: '基础数据接口V1版本',
+  method: 'dataV1',
+  url: '/api/v1/basic/data',
+  type: 'get'
+}, {
+  name: '基础数据接口V2版本',
+  method: 'dataV2',
+  url: '/api/v2/basic/data',
+  type: 'get'
+}, {
+  name: '执行接口',
+  method: 'dataV2',
+  url: '/api/v2/basic/data/execute',
+  type: 'post'，
+  /*静态参数*/
+  data:{
+    lcontent:'测试数据' //请求体参数
+  }，
+  params:{
+    key:'i_s_sys_log'// url参数
+  }
+}]
+```
+
+在入口文件main.js文件中
+```js
+import Vue from 'vue'
+import apiConfig from './api'
+import $api from 'vue-x-axios'
+
+// 注册插件
+Vue.use($api,{
+  apiConfig
+})
+```
+如果需要实时请求线上接口配置的场景，请参考==业务辅助方法==一节。
+
+## 使用方式
+
+> 注册后，在组件环境中，通过this.$api来调用，this即组件实例对象；当非组件环境中，通过Vue.$api来调用。
 
 ```js
 // 发起请求
 this.$api({
-    // 与axios配置一致，会合并全局配置参数globalAxiosOptions
-    url: '/api/v2/basic/data',
-    // url传参
-    params: {
-        key: 's_sys_menu_list',
-        page_id: 90,
-        user_id:0
-    },
-    // 请求体方式传参
-    data:{
-        content:'页面访问量'
-    }
+  // 与axios配置一致，会合并全局配置参数globalAxiosOptions
+  url: '/api/v2/basic/data',
+  // url传参
+  params: {
+    key: 's_sys_menu_list',
+    page_id: 90,
+    user_id:0
+  },
+  // 请求体方式传参
+  data:{
+    content:'页面访问量'
+  }
 }).then(resp => {
-    // 请求成功，执行then的回调
-    console.log(resp)
+  // 请求成功，执行then的回调
+  console.log(resp)
 }).catch(err=>{
-    // 请求发生异常时，你可以在catch的回调里处理
-    console.log(err)
+  // 请求发生异常时，你可以在catch的回调里处理
+  console.log(err)
 }).finally(() => {
-    // 无论请求是否成功，都会执行finally的回调
-    console.log('done')
+  // 无论请求是否成功，都会执行finally的回调
+  console.log('done')
 })
 ```
 
@@ -107,31 +161,31 @@ this.$api({
 ```js
 // 默认是发起Get请求
 this.$api({
-    // 与axios配置一致
-    url: '/api/v2/basic/data',
-    params: {
-        key: 's_sys_menu_list',
-        page_id: 90,
-        user_id:0
-    }
+  // 与axios配置一致
+  url: '/api/v2/basic/data',
+  params: {
+    key: 's_sys_menu_list',
+    page_id: 90,
+    user_id:0
+  }
 }).then(resp => {
-    console.log(resp)
+  console.log(resp)
 })
 ```
 
 ### Post请求
 ```js
 this.$api({
-    // 与axios配置一致
-    method:'post',
-    url: '/api/v2/basic/data/execute',
-    data: {
-        content: '页面访问量'
-    }
+  // 与axios配置一致
+  method:'post',
+  url: '/api/v2/basic/data/execute',
+  data: {
+    content: '页面访问量'
+  }
 }).then(resp => {
-    console.log(resp)
+  console.log(resp)
 }).finally(()=>{
-    console.log('操作完成')
+  console.log('操作完成')
 })
 ```
 
@@ -144,19 +198,19 @@ this.$api({
 ```js
 // Get请求
 this.$api.get({
-    // 与axios配置一致
-    url: '/api/v2/basic/data',
-    params: {
-        key: 's_sys_menu_list',
-        page_id: 90,
-        user_id:0
-}
+  // 与axios配置一致
+  url: '/api/v2/basic/data',
+  params: {
+    key: 's_sys_menu_list',
+    page_id: 90,
+    user_id:0
+  }
 }).then(resp => {
-    console.log(resp)
+  console.log(resp)
 }).catch(err=>{
-    console.log(err)
+  console.log(err)
 }).finally(() => {
-    console.log('done')
+  console.log('done')
 })
 
 // Post请求
@@ -174,18 +228,18 @@ this.$api.put({}).then().catch().finally()
 ```js
 // 使用方式
 this.$api.dataV2({
-    // 与axios配置一致
-    params: {
-      key: 's_sys_menu_list',
-      page_id: 90,
-      user_id: 0
-    }
+  // 与axios配置一致
+  params: {
+    key: 's_sys_menu_list',
+    page_id: 90,
+    user_id: 0
+  }
 }).then((resp) => {
-    console.log(resp)
+  console.log(resp)
 }).catch(err => {
-    console.log(err)
+  console.log(err)
 }).finally(() => {
-    console.log('done')
+  console.log('done')
 })
 
 this.$api.dataV1({}).then().catch().finally()
@@ -195,31 +249,31 @@ this.$api.dataV1({}).then().catch().finally()
 
 ```js
 const request1 = () => {
-    return this.$api.post({
-          url: '/api/v2/basic/data/execute',
-          params: {
-            key: 'i_s_sys_log'
-          },
-          data: {
-            lcontent: '页面访问量'
-          }
-        })
+  return this.$api.post({
+    url: '/api/v2/basic/data/execute',
+    params: {
+      key: 'i_s_sys_log'
+    },
+    data: {
+      lcontent: '页面访问量'
     }
+  })
+}
 const request2 = () => {
-        return this.$api.dataV2({
-          params: {
-            key: 's_sys_menu_list',
-            page_id: 90,
-            user_id: 0
-          }
-        })
+  return this.$api.dataV2({
+    params: {
+      key: 's_sys_menu_list',
+      page_id: 90,
+      user_id: 0
     }
+  })
+}
 
 this.$api([request1, request2]).then(([resp1,resp2]) => {
-    // 多个请求都完成时，才会调用then的回调
-    // resp1即request1的响应结果，resp2即request2的响应结果，顺序与传入的请求顺序保持一致
-    console.log(resp1)
-    console.log(resp2)
+  // 多个请求都完成时，才会调用then的回调
+  // resp1即request1的响应结果，resp2即request2的响应结果，顺序与传入的请求顺序保持一致
+  console.log(resp1)
+  console.log(resp2)
 })
 ```
 
@@ -229,34 +283,53 @@ this.$api([request1, request2]).then(([resp1,resp2]) => {
 
 ```js
 this.$api.get({
-        url: '/api/v2/basic/data',
-        params: {
-            key: 'select_sys_menu_list',
-            page_id: 90,
-            user_id: 0
-        }
-    }).then(resp => {
-      // resp即第一个接口返回的结果
-      return this.$api.post({
-        url: '/api/v2/basic/data/execute',
-        params: {
-          key: 'i_s_sys_log',
-        },
-        data: {
-          menu:resp.data.data,
-          lcontent: '页面访问量'
-        }
-      })
-    }).then(resp => {
-      // resp即第二个接口返回的结果
-      this.$api.basic.dataV2({
-        params: {
-          key: 's_s_sys_log'
-        }
-      }).then(resp => {
-        console.log(resp)
-    })
+  url: '/api/v2/basic/data',
+  params: {
+    key: 'select_sys_menu_list',
+    page_id: 90,
+    user_id: 0
+  }
+}).then(resp => {
+  // resp即第一个接口返回的结果
+  return this.$api.post({
+    url: '/api/v2/basic/data/execute',
+    params: {
+      key: 'i_s_sys_log',
+    },
+    data: {
+      menu:resp.data.data,
+      lcontent: '页面访问量'
+    }
+  })
+}).then(resp => {
+  // resp即第二个接口返回的结果
+  return this.$api.basic.dataV2({
+    params: {
+      key: 's_s_sys_log'
+    }
+  })
+}).then(resp => {
+  console.log(resp)
 })
+```
+
+### 取消请求
+
+```js
+// 取消所有发起的请求
+this.$api.cancel()
+
+//取消指定的请求
+this.$api.get({
+  name:'s_sys_user_list',
+  ...
+}
+}).then()
+//发起请求的时候，指定name属性，取消请求的时候，就用name属性值来取消请求
+this.$api.cancel('s_sys_user_list')
+
+//第二个参数作为提示信息显示在控制台
+this.$api.cancel('s_sys_user_list','取消了用户接口的请求')
 ```
 
 ### 上传文件
@@ -274,59 +347,39 @@ this.$api({
   // 请求成功，执行then的回调
   console.log(resp)
 }).catch(err => {
-   // 请求发生异常时，你可以在catch的回调里处理
-   console.log(err)
+  // 请求发生异常时，你可以在catch的回调里处理
+  console.log(err)
 }).finally(() => {
-   // 无论请求是否成功，都会执行finally的回调
-   console.log('done')
+  // 无论请求是否成功，都会执行finally的回调
+  console.log('done')
 })
 ```
 
-
-### 取消请求
-
-```js
-// 取消所有发起的请求
-this.$api.cancel()
-
-//取消指定的请求
-this.$api.get({
-    name:'s_sys_user_list',
-    ...
-}
-}).then()
-//发起请求的时候，指定name属性，取消请求的时候，就用name属性值来取消请求
-this.$api.cancel('s_sys_user_list')
-
-//第二个参数作为提示信息显示在控制台
-this.$api.cancel('s_sys_user_list','取消了用户接口的请求')
-```
-
-## token机制参考
+## token机制
 
 > 实现思路：在注册插件时，注册请求拦截器和响应异常拦截器，在请求拦截器里给请求头设置token，在响应异常拦截器里处理token过期时的逻辑
 
 ```js
 import $api from 'vue-x-axios'
 
-let $apiConfig = {
-    // 请求拦截器
-    requestIntercept (config) {
-      config.headers['Authorization'] = `Bearer token值`
-      return config
-    },
-    // 响应异常拦截器
-    responseErrorIntercept (error) {
-      if (error.response.status === 401) {
-        // token过期，自动跳到登录路由
-        // router.push({ name: 'login' }) //如，跳转到登录页
-      }
+let apiConfig = {
+  // 请求拦截器
+  requestIntercept (config) {
+    config.headers['Authorization'] = `Bearer token值`
+    return config
+  },
+  // 响应异常拦截器
+  responseErrorIntercept (error) {
+    if (error.response.status === 401) {
+      // token过期，自动跳到登录路由
+      // router.push({ name: 'login' }) //如，跳转到登录页
     }
   }
-Vue.use($api, $apiConfig)
+}
+Vue.use($api, apiConfig)
 ```
 
-## host配置参考
+## host配置
 
 > 实现思路：在注册插件时，传入路由实例对象与host配置即可。
 
@@ -335,21 +388,21 @@ Vue.use($api, $apiConfig)
 import router from '@/router'
 import $api from 'vue-x-axios'
 
-let $apiConfig = {
-    hosts:  [{
-      url: 'http://47.95.14.230:9208',
-      routeKeys: ['路由名称（在我们的系统中，使用菜单ID来作为路由名称，配菜单ID即可）']
-    }],
-    router
-  }
-Vue.use($api, $apiConfig)
+let apiConfig = {
+  hosts:  [{
+    url: 'https://some-domain.com/api/',
+    routeKeys: ['路由名称（在我们的系统中，使用菜单ID来作为路由名称，配菜单ID即可）']
+  }],
+  router
+}
+Vue.use($api, apiConfig)
 ```
 
-则可实现效果：在命中的模块中，如果接口注册处没有指定完整的url地址，则会使用hosts中指定url来作为请求的目标地址。
+则可实现效果：在命中的模块中，如果发起的接口请求没有指定完整的url地址，则会使用hosts中指定url来作为请求的目标主机。
 
 ## 业务辅助方法
 
-> 在vue-axios基础之上封装了一层业务辅助类，方便请求线上文件进行接口注册，以及内置好token机制，以减少使用者的初始化工作。
+> 在vue-x-axios基础之上封装了一层业务辅助类，方便请求线上文件进行接口注册，以及内置好token机制，以减少使用者的初始化工作。
 
 1. 执行npm install vue-x-axios --save，安装好vue-x-axios包；
 
@@ -362,13 +415,30 @@ import { apiHelper } from 'vue-x-axios'
 apiHelper.register({
   url: '/web/config/system_config.json'
 }).then(() => {
-   new Vue({
-      template: '<App/>',
-      components: { App }
-   }).$mount('#app')
+  new Vue({
+    template: '<App/>',
+    components: { App }
+  }).$mount('#app')
 })
 ```
-如果本地开发未设置请求代理，请传入线上文件完整url地址，如：http://47.95.14.230:9208/web/config/system_config.json , 这样，即完成了线上文件中的接口注册，在业务模块中即可发起线上文件中配置的接口请求了，具体请求方式请参考==配置型接口请求==。
+
+在system_config.json文件中，可对baseURL、hosts、api进行配置，如：
+```js
+{
+  "baseURL": "https://some-domain.com", // 默认为当前站点，当前后端分离部署时，可通过设置baseURL来设置目标接口地址，PS：请确认，后端接口支持跨域请求
+  "hosts": [{
+    "url": "https://some-domain.com/api/",
+    "routeKeys": ["路由名称（在系统中，如菜单ID来作为路由名称，配菜单ID即可）"]
+  }],
+  "api": [{
+    "name": "基础数据接口V1版本",
+    "method": "dataV1",
+    "url": "/api/v1/basic/data",
+    "type": "get"
+  }]
+}
+```
+如果本地开发未设置请求代理，请传入线上文件完整url地址，如：https://some-domain.com/web/config/system_config.json , 这样，即完成了线上文件中的接口注册，在业务模块中即可发起线上文件中配置的接口请求了，具体请求方式请参考==配置型接口请求==。
 
 如果要禁用或自定义辅助方法内的请求拦截器、响应拦截器、响应异常拦截器，则传入null（禁用）或者自定义逻辑函数，如禁用代码如下：
 
@@ -381,12 +451,42 @@ apiHelper.register({
   responseSuccIntercept: null,
   responseErrorIntercept: null
 }).then(() => {
-   new Vue({
-      template: '<App/>',
-      components: { App }
-   }).$mount('#app')
+  new Vue({
+    template: '<App/>',
+    components: { App }
+  }).$mount('#app')
 })
 ```
+
+自定义函数逻辑，如下：
+
+```js
+import { apiHelper } from 'vue-x-axios'
+
+apiHelper.register({
+  url: '/web/config/system_config.json', // 请求线上接口配置文件
+  // 请求拦截器
+  requestIntercept(config){
+    // 自定义处理逻辑
+    return config
+  },
+  // 响应拦截器
+  responseSuccIntercept(resp){
+    // 自定义处理逻辑
+    return resp
+  },
+  // 响应异常拦截器
+  responseErrorIntercept(err){
+    // 自定义处理逻辑
+  }
+}).then(() => {
+  new Vue({
+    template: '<App/>',
+    components: { App }
+  }).$mount('#app')
+})
+```
+
 
 说明：因为内部请求线上文件的动作是异步的，所以后续的操作应该在apiHelper.register的then回调中去处理，比如Vue根实例的初始化。
 
@@ -521,5 +621,7 @@ apiHelper.register({
 ```
 
 ## 更新日志
+- 0.0.2
+修改 文档完善
 - 0.0.1
 新增 版本发布
