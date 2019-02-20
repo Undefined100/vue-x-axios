@@ -1,7 +1,7 @@
 {
   "name": "vue-x-axios",
   "description": "基于axios扩展的Vue异步请求插件，为前端实现API统一管理的解决方案。",
-  "version": "0.0.3",
+  "version": "0.1.1",
   "author": "undefined100 <946424684@qq.com>",
   "license": "MIT",
   "private": false,
@@ -11,6 +11,10 @@
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "lint": "eslint --ext .js,.vue src",
     "fix": "npm run lint -- --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Undefined100/vue-x-axios"
   },
   "dependencies": {
     "axios": "^0.18.0",
