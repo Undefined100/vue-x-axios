@@ -210,11 +210,11 @@ let api = {
     const registerMethod = (apiConfig) => {
       apiConfig.forEach(methodConfig => {
         if (!methodConfig.method) {
-          console.warn(`%c url: ${methodConfig.url}的接口注册未填写method属性，请前往服务器上Config/Json目录下的api.json文件进行调整！`, 'font-size:2em')
+          console.warn(`%c url: ${methodConfig.url}的接口注册未填写method属性，请调整！`, 'font-size:2em')
           return false
         }
         if ($api[methodConfig.method]) {
-          console.warn(`%c 存在重名的接口方法注册(method: ${methodConfig.method})，请前往服务器上Config/Json目录下的api.json文件进行调整！`, 'font-size:2em')
+          console.warn(`%c 存在重名的接口方法注册(method: ${methodConfig.method})，请调整！`, 'font-size:2em')
           return false
         }
         $api[methodConfig.method] = (options) => {
