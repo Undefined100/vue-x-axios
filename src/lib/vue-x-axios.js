@@ -148,9 +148,6 @@ let api = {
 
     // http响应拦截器
     axios.interceptors.response.use(resp => {
-      if ((resp.data || {}).error) {
-        console.warn(resp.data.error)
-      }
       delete $api.cancelStack[resp.config.name]
       responseSuccIntercept && responseSuccIntercept(resp)
       return resp
@@ -173,7 +170,7 @@ let api = {
         let targetHost = hosts.find(host => {
           return host.routeKeys.find(routeKey => routeKey === currentRoute.name)
         })
-        options.baseURL = (targetHost || {}).url || ''
+        options.baseURL = (targetHost || {}).url || null
       }
       return new Promise((resolve, reject) => {
         axios(options).then(resp => {
