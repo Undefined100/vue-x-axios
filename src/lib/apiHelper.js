@@ -31,19 +31,19 @@ const apiHelper = {
       // 接口配置
       apiConfig: api,
       // 请求拦截器
-      requestIntercept: (req) => {
+      requestIntercept: req => {
         NProgress.start()
         requestIntercept && requestIntercept(req)
       },
       // 响应成功拦截器
-      responseSuccIntercept: (resp) => {
+      responseSuccIntercept: resp => {
         NProgress.done()
         responseSuccIntercept && responseSuccIntercept(resp)
       },
       // 响应异常拦截器
-      responseErrorIntercept: () => {
+      responseErrorIntercept:  error => {
         NProgress.done()
-        responseErrorIntercept && responseErrorIntercept(arguments)
+        responseErrorIntercept && responseErrorIntercept(error)
       }
     }
     hosts && hosts.length > 0 && Object.assign($apiConfig, {
