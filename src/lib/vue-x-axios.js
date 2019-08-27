@@ -37,10 +37,15 @@ const defaultsAxiosOptions = {
   //     // 对 data 进行任意转换处理
   //     return data;
   // }],
+  transformRequest: [
+    data => Qs.stringify(data, { arrayFormat: 'repeat', skipNulls: true })
+  ],
 
   // `headers` 是即将被发送的自定义请求头
   // headers: { 'X-Request-Module': window.location.href },
-
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  },
   // `params` 是即将与请求一起发送的 URL 参数
   // 必须是一个无格式对象(plain object)或 URLSearchParams 对象
   // params: {
@@ -50,7 +55,7 @@ const defaultsAxiosOptions = {
   // `paramsSerializer` 是一个负责 `params` 序列化的函数
   // (e.g. https://www.npmjs.com/package/qs, http://api.jquery.com/jquery.param/)
   paramsSerializer: params => {
-    return Qs.stringify(params, { skipNulls: true })
+    return Qs.stringify(params, { arrayFormat: 'repeat', skipNulls: true })
   }
 
   // `data` 是作为请求主体被发送的数据
