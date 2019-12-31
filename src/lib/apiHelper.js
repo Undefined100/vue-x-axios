@@ -19,7 +19,7 @@ const apiHelper = {
     }
     // 异步请求插件注册
     Vue.use($api)
-    if (typeof(systemConfig) === 'string') {
+    if (typeof (systemConfig) === 'string') {
       systemConfig = (await Vue.$api({
         systemConfig
       })).data || {}
@@ -41,7 +41,7 @@ const apiHelper = {
         responseSuccIntercept && responseSuccIntercept(resp)
       },
       // 响应异常拦截器
-      responseErrorIntercept:  error => {
+      responseErrorIntercept: error => {
         NProgress.done()
         responseErrorIntercept && responseErrorIntercept(error)
       }

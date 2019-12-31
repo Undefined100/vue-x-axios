@@ -2,14 +2,14 @@ var path = require('path')
 var webpack = require('webpack')
 
 module.exports = {
-  entry:process.env.NODE_ENV === 'production'?'./index.js':'./src/main.js',
+  entry: process.env.NODE_ENV === 'production' ? './index.js' : './src/main.js',
   output: {
     path: path.resolve(__dirname, './dist'),
     publicPath: '/dist/',
     filename: 'vue-x-axios.js',
-    library:'vue-x-axios',
-    libraryTarget:'umd',
-    umdNamedDefine:true
+    library: 'vue-x-axios',
+    libraryTarget: 'umd',
+    umdNamedDefine: true
   },
   module: {
     rules: [
@@ -18,8 +18,8 @@ module.exports = {
         use: [
           'vue-style-loader',
           'css-loader'
-        ],
-      },      
+        ]
+      },
       {
         test: /\.(js|vue)$/,
         loader: 'eslint-loader',
