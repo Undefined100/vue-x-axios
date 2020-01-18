@@ -18,7 +18,7 @@ import $api from 'vue-x-axios'
 // 注册插件
 Vue.use($api)
 
-// 或者，你也可以传入可选参数，如以下的可选的配置参数：
+// 或者，你也可以传入可选参数，完整配置参数如下：
 Vue.use($api, {
   // globalAxiosOptions配置与axios配置一致，axios配置参考axios配置一节
   globalAxiosOptions: {
@@ -42,20 +42,19 @@ Vue.use($api, {
 
   // API配置信息
   apiConfig：[{
-    name: '基础数据接口V1版本',
-    method: 'dataV1',
-    url: '/api/v1/basic/data',
+    name: '通用查询接口',
+    method: 'queryData',
+    url: '/api/v1/basic/queryData'
+  }, {
+    name: '通用查询分页接口',
+    method: 'pagingData',
+    url: '/api/v1/basic/pagingData',
     type: 'get'
   }, {
-    name: '基础数据接口V2版本',
-    method: 'dataV2',
-    url: '/api/v2/basic/data',
-    type: 'get'
-  }, {
-    name: '执行接口',
-    method: 'dataV2',
-    url: 'https://some-domain2.com//api/v2/basic/data/execute',
-    type: 'post'，
+    name: '通用新增接口',
+    method: 'add',
+    url: '/api/v1/basic/execute',
+    type: 'post',
     /*静态参数*/
     data:{
       lcontent:'测试数据' //请求体参数
@@ -63,22 +62,14 @@ Vue.use($api, {
     params:{
       key:'i_s_sys_log'// url参数
     }
-  }],
-  // host配置，设置路由模块使用指定的host
-  hosts: [{
-    'url': 'https://some-domain.com/api/',
-    'routeKeys': ['faf1b16f-8cf4-48ca-a4f5-0d8f2ba787a9'] // 路由名称，用到host配置时，需要将路由实例对象传进来
-  }],
-  // 路由实例对象
-  router
+  }]
 })
 ```
 
 ### 最佳实践
 
 1、将API的配置统一在一个文件中进行管理
-2、在注册异步请求插件的地方，将API配置文件引入，进行注册
-如：
+2、在注册异步请求插件的地方，将API配置文件引入进行注册，如：
 ```
 ├── src
 │   ├── api.js // 接口配置文件
@@ -89,20 +80,19 @@ api.js文件内容，如下：
 ```js
 export default
 [{
-  name: '基础数据接口V1版本',
-  method: 'dataV1',
-  url: '/api/v1/basic/data',
+  name: '通用查询接口',
+  method: 'queryData',
+  url: '/api/v1/basic/queryData'
+}, {
+  name: '通用查询分页接口',
+  method: 'pagingData',
+  url: '/api/v1/basic/pagingData',
   type: 'get'
 }, {
-  name: '基础数据接口V2版本',
-  method: 'dataV2',
-  url: '/api/v2/basic/data',
-  type: 'get'
-}, {
-  name: '执行接口',
-  method: 'dataV2',
-  url: '/api/v2/basic/data/execute',
-  type: 'post'，
+  name: '通用新增接口',
+  method: 'add',
+  url: '/api/v1/basic/execute',
+  type: 'post',
   /*静态参数*/
   data:{
     lcontent:'测试数据' //请求体参数
@@ -124,74 +114,35 @@ Vue.use($api,{
   apiConfig
 })
 ```
-如果需要实时请求线上接口配置的场景，请参考==业务辅助方法==一节。
+如果需要实时请求线上接口配置的场景，请参考[业务辅助方法](#业务辅助方法)一节。
 
 ## 使用方式
 
-> 注册后，在组件环境中，通过this.$api来调用，this即组件实例对象；当非组件环境中，通过Vue.$api来调用。
+> 注册后，在组件环境中，通过this.\$api来调用，this即组件实例对象；当非组件环境中，通过Vue.\$api来调用。
+
+### 配置型接口请求
+
+> 在注册的地方需要将apiConfig配置传入，比如根据以上传入的API配置信息，你就可以在组件中使用以下方式调用：
 
 ```js
-// 发起请求
-this.$api({
-  // 与axios配置一致，会合并全局配置参数globalAxiosOptions
-  url: '/api/v2/basic/data',
-  // url传参
+// 使用方式
+this.$api.queryData({
+  // 与axios配置一致
   params: {
     key: 's_sys_menu_list',
     page_id: 90,
-    user_id:0
-  },
-  // 请求体方式传参
-  data:{
-    content:'页面访问量'
+    user_id: 0
   }
-}).then(resp => {
-  // 请求成功，执行then的回调
+}).then((resp) => {
   console.log(resp)
-}).catch(err=>{
-  // 请求发生异常时，你可以在catch的回调里处理
+}).catch(err => {
   console.log(err)
 }).finally(() => {
-  // 无论请求是否成功，都会执行finally的回调
   console.log('done')
 })
-```
 
-### Get请求
-```js
-// 默认是发起Get请求
-this.$api({
-  // 与axios配置一致
-  url: '/api/v2/basic/data',
-  params: {
-    key: 's_sys_menu_list',
-    page_id: 90,
-    user_id:0
-  }
-}).then(resp => {
-  console.log(resp)
-})
+this.$api.pagingData({}).then().catch().finally()
 ```
-
-### Post请求
-```js
-this.$api({
-  // 与axios配置一致
-  method:'post',
-  url: '/api/v2/basic/data/execute',
-  data: {
-    content: '页面访问量'
-  }
-}).then(resp => {
-  console.log(resp)
-}).finally(()=>{
-  console.log('操作完成')
-})
-```
-
-无论发起Get请求还是非Get请求：
-1. params参数和data参数都是可选的
-2. 在Get请求中可以有data参数，在非Get请求中也可以有params参数
 
 ### 语义化请求
 
@@ -221,36 +172,42 @@ this.$api.delete({}).then().catch().finally()
 this.$api.put({}).then().catch().finally()
 ```
 
-### 配置型接口请求
+### 链式请求
 
-> 在注册的地方需要将apiConfig配置传入，比如根据以上传入的API配置信息，你就可以在组件中使用以下方式调用：
+> 当一个接口需要另一个接口的返回值时，则链式请求就可以派上用场，使用方式如下：
 
 ```js
-// 使用方式
-this.$api.dataV2({
-  // 与axios配置一致
+this.$api.queryData({
   params: {
-    key: 's_sys_menu_list',
+    key: 'select_sys_menu_list',
     page_id: 90,
     user_id: 0
   }
-}).then((resp) => {
+}).then(resp => {
+  // resp即第一个接口返回的结果
+  return this.$api.pagingData({
+    params: {
+      key: 'i_s_sys_log',
+    }
+  })
+}).then(resp => {
+  // resp即第二个接口返回的结果
+  return this.$api.add({
+    data: {
+      menu:resp.data.data,
+      lcontent: '页面访问量'
+    }
+  })
+}).then(resp => {
   console.log(resp)
-}).catch(err => {
-  console.log(err)
-}).finally(() => {
-  console.log('done')
 })
-
-this.$api.dataV1({}).then().catch().finally()
 ```
 
 ### 并发请求
 
 ```js
 const request1 = () => {
-  return this.$api.post({
-    url: '/api/v2/basic/data/execute',
+  return this.$api.add({
     params: {
       key: 'i_s_sys_log'
     },
@@ -260,7 +217,7 @@ const request1 = () => {
   })
 }
 const request2 = () => {
-  return this.$api.dataV2({
+  return this.$api.queryData({
     params: {
       key: 's_sys_menu_list',
       page_id: 90,
@@ -274,42 +231,6 @@ this.$api([request1, request2]).then(([resp1,resp2]) => {
   // resp1即request1的响应结果，resp2即request2的响应结果，顺序与传入的请求顺序保持一致
   console.log(resp1)
   console.log(resp2)
-})
-```
-
-### 链式请求
-
-> 当一个接口需要另一个接口的返回值时，则链式请求就可以派上用场，使用方式如下：
-
-```js
-this.$api.get({
-  url: '/api/v2/basic/data',
-  params: {
-    key: 'select_sys_menu_list',
-    page_id: 90,
-    user_id: 0
-  }
-}).then(resp => {
-  // resp即第一个接口返回的结果
-  return this.$api.post({
-    url: '/api/v2/basic/data/execute',
-    params: {
-      key: 'i_s_sys_log',
-    },
-    data: {
-      menu:resp.data.data,
-      lcontent: '页面访问量'
-    }
-  })
-}).then(resp => {
-  // resp即第二个接口返回的结果
-  return this.$api.basic.dataV2({
-    params: {
-      key: 's_s_sys_log'
-    }
-  })
-}).then(resp => {
-  console.log(resp)
 })
 ```
 
@@ -432,13 +353,13 @@ apiHelper.register({
   }],
   "api": [{
     "name": "基础数据接口V1版本",
-    "method": "dataV1",
-    "url": "/api/v1/basic/data",
+    "method": "queryData",
+    "url": "/api/v1/queryData",
     "type": "get"
   }]
 }
 ```
-如果本地开发未设置请求代理，请传入线上文件完整url地址，如：https://some-domain.com/web/config/system_config.json , 这样，即完成了线上文件中的接口注册，在业务模块中即可发起线上文件中配置的接口请求了，具体请求方式请参考==配置型接口请求==。
+如果本地开发未设置请求代理，请传入线上文件完整url地址，如：https://some-domain.com/web/config/system_config.json , 这样，即完成了线上文件中的接口注册，在业务模块中即可发起线上文件中配置的接口请求了，具体请求方式请参考[配置型接口请求](#配置型接口请求)。
 
 如果要禁用或自定义辅助方法内的请求拦截器、响应拦截器、响应异常拦截器，则传入null（禁用）或者自定义逻辑函数，如禁用代码如下：
 
@@ -486,7 +407,6 @@ apiHelper.register({
   }).$mount('#app')
 })
 ```
-
 
 说明：因为内部请求线上文件的动作是异步的，所以后续的操作应该在apiHelper.register的then回调中去处理，比如Vue根实例的初始化。
 
@@ -621,7 +541,11 @@ apiHelper.register({
 ```
 
 ## 更新日志
+- 2.0.0
+调整 业务辅助方法逻辑及核心方法
+- 1.0.0
+调整 业务辅助方法逻辑
 - 0.0.2
-修改 文档完善
+调整 文档完善
 - 0.0.1
 新增 版本发布
