@@ -145,8 +145,7 @@ let api = {
   install: (Vue, { requestIntercept, responseSuccIntercept, responseErrorIntercept, globalAxiosOptions, apiConfig, hosts, router } = {}) => {
     // http请求拦截器
     axios.interceptors.request.use(config => {
-      requestIntercept && requestIntercept(config)
-      return config
+      return requestIntercept ? requestIntercept(config) : config
     }, err => {
       return Promise.reject(err)
     })
@@ -154,11 +153,9 @@ let api = {
     // http响应拦截器
     axios.interceptors.response.use(resp => {
       delete $api.cancelStack[resp.config.name]
-      responseSuccIntercept && responseSuccIntercept(resp)
-      return resp
+      return responseSuccIntercept ? responseSuccIntercept(resp) : resp
     }, err => {
-      responseErrorIntercept && responseErrorIntercept(err)
-      return Promise.reject(err)
+      return responseErrorIntercept ? responseErrorIntercept(err) : Promise.reject(err)
     })
 
     // 发送请求

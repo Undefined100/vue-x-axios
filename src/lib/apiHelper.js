@@ -33,17 +33,17 @@ const apiHelper = {
       // 请求拦截器
       requestIntercept: req => {
         NProgress.start()
-        requestIntercept && requestIntercept(req)
+        return requestIntercept ? requestIntercept(req) : req
       },
       // 响应成功拦截器
       responseSuccIntercept: resp => {
         NProgress.done()
-        responseSuccIntercept && responseSuccIntercept(resp)
+        return responseSuccIntercept ? responseSuccIntercept(resp) : resp
       },
       // 响应异常拦截器
       responseErrorIntercept: error => {
         NProgress.done()
-        responseErrorIntercept && responseErrorIntercept(error)
+        return responseErrorIntercept ? responseErrorIntercept(error) : error
       }
     }
     hosts && hosts.length > 0 && Object.assign($apiConfig, {
