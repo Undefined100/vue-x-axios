@@ -62,6 +62,10 @@ Vue.use($api, {
     params:{
       key:'i_s_sys_log'// url参数
     }
+  }, {
+    name: '路径参数型接口',
+    method: 'getUser',
+    url: '/api/v1/getUser/{id}'
   }]
 })
 ```
@@ -100,6 +104,10 @@ export default
   params:{
     key:'i_s_sys_log'// url参数
   }
+}, {
+  name: '路径参数型接口',
+  method: 'getUser',
+  url: '/api/v1/getUser/{id}'
 }]
 ```
 
@@ -146,11 +154,11 @@ this.$api.pagingData({}).then().catch().finally()
 
 ### 路径参数型请求
 
-> 在配置型接口基础上，会默认扩展一种路径参数型请求，通过对应方法的restful方法发起请求，并将params参数依次拼接到url路径上，比如以下调用：
+> 在配置型接口基础上，会默认扩展一种路径参数型请求，通过对应方法的restful方法发起请求，并将匹配到的params参数替换到url路径上，未匹配到的参数拼接到url参数上，比如以下调用：
 
 ```js
 // 使用方式
-this.$api.queryData.restful({
+this.$api.getUser.restful({
   // 与axios配置一致
   params: {
     id: 1,
@@ -165,7 +173,7 @@ this.$api.queryData.restful({
 })
 ```
 
-最终发起的请求路径为：/api/v1/basic/queryData/1/18，以满足后端接口通过路径来接收参数。
+最终发起的请求路径为：/api/v1/getUser/1?age=18，以满足后端接口通过路径来接收参数。
 
 ### 语义化请求
 
@@ -564,6 +572,8 @@ apiHelper.register({
 ```
 
 ## 更新日志
+- 2.0.5
+新增 restful型请求
 - 2.0.0
 调整 业务辅助方法逻辑及核心方法
 - 1.0.0

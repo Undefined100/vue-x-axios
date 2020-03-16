@@ -225,10 +225,18 @@ let api = {
         $api[methodConfig.method].restful = (options) => {
           let { url, data, params, type } = methodConfig
           options = Object.assign({}, { method: type || 'get', url, data, params }, options)
-          Object.values(options.params || {}).forEach(param => {
-            options.url += `/${param}`
+          let unMatchedParams = {}
+          Object.entries(options.params || {}).forEach(entry => {
+            let val = entry[1]
+            let name = entry[0]
+            var regex = new RegExp(`{${name}}`, 'g')
+            if (regex.test(options.url)) {
+              options.url = options.url.replace(regex, `${val}`)
+            } else {
+              unMatchedParams[name] = val
+            }
           })
-          delete options['params']
+          options.params = unMatchedParams
           return $api(options)
         }
       })
