@@ -221,6 +221,16 @@ let api = {
           options = Object.assign({}, { method: type || 'get', url, data, params }, options)
           return $api(options)
         }
+        // 扩展url路径型参数
+        $api[methodConfig.method].restful = (options) => {
+          let { url, data, params, type } = methodConfig
+          options = Object.assign({}, { method: type || 'get', url, data, params }, options)
+          Object.values(options.params || {}).forEach(param => {
+            options.url += `/${param}`
+          })
+          delete options['params']
+          return $api(options)
+        }
       })
     }
 
