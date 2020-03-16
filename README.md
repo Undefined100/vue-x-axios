@@ -144,6 +144,29 @@ this.$api.queryData({
 this.$api.pagingData({}).then().catch().finally()
 ```
 
+### 路径参数型请求
+
+> 在配置型接口基础上，会默认扩展一种路径参数型请求，通过对应方法的restful方法发起请求，并将params参数依次拼接到url路径上，比如以下调用：
+
+```js
+// 使用方式
+this.$api.queryData.restful({
+  // 与axios配置一致
+  params: {
+    id: 1,
+    age: 18
+  }
+}).then((resp) => {
+  console.log(resp)
+}).catch(err => {
+  console.log(err)
+}).finally(() => {
+  console.log('done')
+})
+```
+
+最终发起的请求路径为：/api/v1/basic/queryData/1/18，以满足后端接口通过路径来接收参数。
+
 ### 语义化请求
 
 ```js
