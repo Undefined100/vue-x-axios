@@ -224,6 +224,7 @@ let api = {
         // 扩展url路径型参数
         $api[methodConfig.method].restful = (options) => {
           let { url, data, params, type } = methodConfig
+          options.type && (options.method = options.type)
           options = Object.assign({}, { method: type || 'get', url, data, params }, options)
           let unMatchedParams = {}
           Object.entries(options.params || {}).forEach(entry => {
