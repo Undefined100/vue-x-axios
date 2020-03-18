@@ -218,6 +218,7 @@ let api = {
         }
         $api[methodConfig.method] = (options) => {
           let { url, data, params, type } = methodConfig
+          options.type && (options.method = options.type)
           options = Object.assign({}, { method: type || 'get', url, data, params }, options)
           return $api(options)
         }
