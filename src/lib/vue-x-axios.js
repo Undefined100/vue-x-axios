@@ -241,6 +241,7 @@ let api = {
           options.params = unMatchedParams
           return $api(options)
         }
+        $api[methodConfig.method].config = methodConfig
       })
     }
 
