@@ -152,10 +152,18 @@ this.$api.queryData({
 this.$api.pagingData({}).then().catch().finally()
 ```
 
-### 路径参数型请求
+### restful请求
 
-> 在配置型接口基础上，会默认扩展一种路径参数型请求，通过对应方法的restful方法发起请求，并将匹配到的params参数替换到url路径上，未匹配到的参数拼接到url参数上，比如以下调用：
+> 在配置型接口基础上，会默认扩展一种路径参数型请求，通过对应方法的restful方法发起请求，并将匹配到的params参数替换到url路径上，未匹配到的参数拼接到url参数上，比如获取用户接口注册为：
+```js
+[{
+  name: '路径参数型接口',
+  method: 'getUser',
+  url: '/api/v1/getUser/{id}'
+}]
+```
 
+则可发起以下调用：
 ```js
 // 使用方式
 this.$api.getUser.restful({
@@ -173,7 +181,7 @@ this.$api.getUser.restful({
 })
 ```
 
-最终发起的请求路径为：/api/v1/getUser/1?age=18，以满足后端接口通过路径来接收参数。
+最终发起的请求为：/api/v1/getUser/1?age=18，以满足后端接口通过路径来接收参数的场景。
 
 ### 语义化请求
 
