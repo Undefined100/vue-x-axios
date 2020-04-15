@@ -28,11 +28,13 @@ Vue.use($api, {
   // 请求拦截器
   requestIntercept(config){
     // 自定义处理逻辑
+    return config
   },
 
   // 响应拦截器
   responseSuccIntercept(resp){
     // 自定义处理逻辑
+    return resp
   },
 
   // 响应异常拦截器
