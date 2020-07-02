@@ -1,15 +1,26 @@
 var path = require('path')
 var webpack = require('webpack')
+const isProd = process.env.NODE_ENV === 'production'
 
 module.exports = {
-  entry: process.env.NODE_ENV === 'production' ? './index.js' : './src/main.js',
+  devtool: isProd ? false : '#eval-source-map',
+  entry: isProd ? './index.js' : './src/main.js',
   output: {
     path: path.resolve(__dirname, './dist'),
     publicPath: '/dist/',
     filename: 'vue-x-axios.js',
-    library: 'vue-x-axios',
+    library: '$api',
+    umdNamedDefine: true,
     libraryTarget: 'umd',
-    umdNamedDefine: true
+    libraryExport: 'default'
+  },
+  externals: {
+    vue: {
+      root: 'Vue',
+      amd: 'vue',
+      commonjs: 'vue',
+      commonjs2: 'vue'
+    }
   },
   module: {
     rules: [
@@ -39,13 +50,6 @@ module.exports = {
           'babel-loader'
         ],
         exclude: /node_modules/
-      },
-      {
-        test: /\.(png|jpg|gif|svg)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name].[ext]?[hash]'
-        }
       }
     ]
   },
@@ -62,12 +66,10 @@ module.exports = {
   },
   performance: {
     hints: false
-  },
-  devtool: '#eval-source-map'
+  }
 }
 
-if (process.env.NODE_ENV === 'production') {
-  module.exports.devtool = '#source-map'
+if (isProd) {
   module.exports.plugins = (module.exports.plugins || []).concat([
     new webpack.DefinePlugin({
       'process.env': {

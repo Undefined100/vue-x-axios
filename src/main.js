@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import VuePlugin from './lib/'
+import VuePlugin from './lib/vue-x-axios'
 import App from './App.vue'
 
 Vue.use(VuePlugin, {
