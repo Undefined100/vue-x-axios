@@ -1,4 +1,4 @@
-import Vue from 'vue'
+﻿import Vue from 'vue'
 // 异步请求插件
 import $api from './vue-x-axios'
 // 加载进度条
@@ -32,7 +32,7 @@ const apiHelper = {
       apiConfig: api,
       // 请求拦截器
       requestIntercept: req => {
-        NProgress.start()
+        req.showProgress !== false && NProgress.start()
         return requestIntercept ? requestIntercept(req) : req
       },
       // 响应成功拦截器
