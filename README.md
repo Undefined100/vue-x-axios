@@ -20,6 +20,7 @@ Vue.use($api)
 
 // 或者，你也可以传入可选参数，完整配置参数如下：
 Vue.use($api, {
+  cacheTime: 6000, // 接口结果缓存时间(单位：ms)，默认1分钟
   // globalAxiosOptions配置与axios配置一致，axios配置参考axios配置一节
   globalAxiosOptions: {
     baseURL: 'https://some-domain.com/api/'
@@ -316,6 +317,46 @@ this.$api({
   console.log('done')
 })
 ```
+
+
+
+## 接口缓存
+
+> 当接口结果变动性不大，或对接口结果实时性要求不高的话，可以开启接口缓存功能。
+
+开启缓存，有以下两种方式，优先级：发起请求时设置>接口配置文件中设置
+
+- 在接口配置文件中配置
+
+```js
+export default
+[{
+  name: '通用查询接口',
+  method: 'queryData',
+  url: '/api/v1/basic/queryData',
+  cache: true, // 开启缓存，默认为不开启
+  cacheTime: 10000 // 缓存时间(单位：ms)，默认为1分钟
+}]
+```
+
+- 发起请求时
+
+```js
+this.$api.queryData({
+  cache: true, // 开启缓存，默认为不开启
+  cacheTime: 10000, // 缓存时间(单位：ms)，默认为1分钟
+  params: {
+    key: 's_sys_menu_list',
+    page_id: 90,
+    user_id: 0
+  }
+}).then((resp) => {
+  console.log(resp)
+})
+
+```
+
+
 
 ## token机制
 
