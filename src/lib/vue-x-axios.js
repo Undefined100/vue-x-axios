@@ -1,7 +1,9 @@
+﻿import Qs from 'qs'
 import axios from 'axios'
-import Qs from 'qs'
-import { shim } from 'promise.prototype.finally'
-shim()
+
+let cachePool = {}
+let CACHE_TIME = 60000 // 单位ms
+const CancelToken = axios.CancelToken
 
 const defaultsAxiosOptions = {
   // `url` 是用于请求的服务器 URL
@@ -142,9 +144,26 @@ const defaultsAxiosOptions = {
 }
 
 let api = {
-  install: (Vue, { requestIntercept, responseSuccIntercept, responseErrorIntercept, globalAxiosOptions, apiConfig, hosts, router } = {}) => {
+  install: (Vue, { requestIntercept, responseSuccIntercept, responseErrorIntercept, globalAxiosOptions, apiConfig, hosts, router, cacheTime } = {}) => {
     // http请求拦截器
     axios.interceptors.request.use(config => {
+      const { cache, cacheTime: _cacheTime, url, method, params, data } = config
+      if (cache) {
+        const source = CancelToken.source()
+        config.cancelToken = source.token
+        // 去缓存池获取缓存数据
+        const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''}_${
+          data ? JSON.stringify(data) : ''
+        }`
+        const cacheData = cachePool[cacheKey]
+        // 获取当前时间戳
+        const expireTime = new Date().getTime()
+        // 判断缓存池中是否存在已有数据 存在的话 再判断是否过期
+        // 未过期 source.cancel会取消当前的请求 并将内容返回到拦截器的err中
+        if (cacheData && expireTime - cacheData.expire < (_cacheTime || CACHE_TIME)) {
+          source.cancel(cacheData)
+        }
+      }
       return requestIntercept ? requestIntercept(config) : config
     }, err => {
       return Promise.reject(err)
@@ -152,9 +171,25 @@ let api = {
 
     // http响应拦截器
     axios.interceptors.response.use(resp => {
-      delete $api.cancelStack[resp.config.name]
-      return responseSuccIntercept ? responseSuccIntercept(resp) : resp
+      if (resp.status && resp.statusText) { // 来自接口的响应
+        const { name, cache, url, method, params, data } = resp.config
+        delete $api.cancelStack[name]
+        if (cache) {
+          // 缓存数据 并将当前时间存入 方便之后判断是否过期
+          const cacheData = {
+            data: resp.data,
+            expire: new Date().getTime()
+          }
+          const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''}_${data ||
+            ''}`
+          cachePool[cacheKey] = cacheData
+        }
+        return responseSuccIntercept ? responseSuccIntercept(resp) : resp
+      } else { // 来自缓存的响应
+        return resp
+      }
     }, err => {
+      if (axios.isCancel(err)) return Promise.resolve(err.message?.data)
       return responseErrorIntercept ? responseErrorIntercept(err) : Promise.reject(err)
     })
 
@@ -206,27 +241,26 @@ let api = {
       return ajax(options)
     }
     // 注册配置类接口
-    const registerMethod = (apiConfig) => {
+    const registerMethod = apiConfig => {
       apiConfig.forEach(methodConfig => {
-        if (!methodConfig.method) {
-          console.warn(`%c url: ${methodConfig.url}的接口注册未填写method属性，请调整！`, 'font-size:2em')
+        const { cache, cacheTime: _cacheTime, url, method, params, data, type } = methodConfig
+        if (!method) {
+          console.warn(`%c url: ${url}的接口注册未填写method属性，请调整！`, 'font-size:2em')
           return false
         }
         if ($api[methodConfig.method]) {
-          console.warn(`%c 存在重名的接口方法注册(method: ${methodConfig.method})，请调整！`, 'font-size:2em')
+          console.warn(`%c 存在重名的接口方法注册(method: ${method})，请调整！`, 'font-size:2em')
           return false
         }
-        $api[methodConfig.method] = (options) => {
-          let { url, data, params, type } = methodConfig
+        $api[method] = options => {
           options && options.type && (options.method = options.type)
-          options = Object.assign({}, { method: type || 'get', url, data, params }, options)
+          options = Object.assign({}, { cache, cacheTime: _cacheTime, method: type || 'get', url, data, params }, options)
           return $api(options)
         }
-        // 扩展url路径型参数
-        $api[methodConfig.method].restful = (options) => {
-          let { url, data, params, type } = methodConfig
+        // 扩展url路径型参数请求
+        $api[method].restful = options => {
           options && options.type && (options.method = options.type)
-          options = Object.assign({}, { method: type || 'get', url, data, params }, options)
+          options = Object.assign({}, { cache, cacheTime: _cacheTime, method: type || 'get', url, data, params }, options)
           let unMatchedParams = {}
           Object.entries(options.params || {}).forEach(entry => {
             let val = entry[1]
@@ -240,6 +274,11 @@ let api = {
           })
           options.params = unMatchedParams
           return $api(options)
+        }
+        // 清除缓存
+        $api[method].clearCache = () => {
+          const cacheKey = `${url}_${type || 'get'}`
+          Object.keys(cachePool).filter(key => key.indexOf(cacheKey) === 0).forEach(key => delete cachePool[key])
         }
         $api[methodConfig.method].config = methodConfig
       })
@@ -256,10 +295,14 @@ let api = {
       }
       name ? $api.cancelStack[name](message) : Object.values($api.cancelStack).map(c => c(message))
     }
+    // 初始化缓存时间，默认60s
+    CACHE_TIME = cacheTime || 60000
+    // 设置缓存时间(单位ms)
+    $api.setCacheTime = time => (CACHE_TIME = time)
+    // 清空缓存
+    $api.clearCache = () => (cachePool = {})
     // 语义化请求
-    $api.request = options => {
-      return request(options)
-    }
+    $api.request = options => request(options)
     $api.get = options => {
       return requestWithAliases(options, { method: 'get' })
     }
