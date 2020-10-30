@@ -1,9 +1,9 @@
-﻿import Qs from 'qs'
-import axios from 'axios'
+﻿import Qs from "qs";
+import axios from "axios";
 
-let cachePool = {}
-let CACHE_TIME = 60000 // 单位ms
-const CancelToken = axios.CancelToken
+let cachePool = {};
+let CACHE_TIME = 60000; // 单位ms
+const CancelToken = axios.CancelToken;
 
 const defaultsAxiosOptions = {
   // `url` 是用于请求的服务器 URL
@@ -40,13 +40,13 @@ const defaultsAxiosOptions = {
   //     return data;
   // }],
   transformRequest: [
-    data => Qs.stringify(data, { arrayFormat: 'repeat', skipNulls: true })
+    data => Qs.stringify(data, { arrayFormat: "repeat", skipNulls: true })
   ],
 
   // `headers` 是即将被发送的自定义请求头
   // headers: { 'X-Request-Module': window.location.href },
   headers: {
-    'Content-Type': 'application/x-www-form-urlencoded'
+    "Content-Type": "application/x-www-form-urlencoded"
   },
   // `params` 是即将与请求一起发送的 URL 参数
   // 必须是一个无格式对象(plain object)或 URLSearchParams 对象
@@ -57,7 +57,7 @@ const defaultsAxiosOptions = {
   // `paramsSerializer` 是一个负责 `params` 序列化的函数
   // (e.g. https://www.npmjs.com/package/qs, http://api.jquery.com/jquery.param/)
   paramsSerializer: params => {
-    return Qs.stringify(params, { arrayFormat: 'repeat', skipNulls: true })
+    return Qs.stringify(params, { arrayFormat: "repeat", skipNulls: true });
   }
 
   // `data` 是作为请求主体被发送的数据
@@ -141,190 +141,284 @@ const defaultsAxiosOptions = {
   // `cancelToken` 指定用于取消请求的 cancel token
   // （查看后面的 Cancellation 这节了解更多）
   // cancelToken: new CancelToken(function(cancel) {})
-}
+};
 
 let api = {
-  install: (Vue, { requestIntercept, responseSuccIntercept, responseErrorIntercept, globalAxiosOptions, apiConfig, hosts, router, cacheTime } = {}) => {
+  install: (
+    Vue,
+    {
+      requestIntercept,
+      responseSuccIntercept,
+      responseErrorIntercept,
+      globalAxiosOptions,
+      apiConfig,
+      hosts,
+      router,
+      cacheTime
+    } = {}
+  ) => {
     // http请求拦截器
-    axios.interceptors.request.use(config => {
-      const { cache, cacheTime: _cacheTime, url, method, params, data } = config
-      if (cache) {
-        const source = CancelToken.source()
-        config.cancelToken = source.token
-        // 去缓存池获取缓存数据
-        const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''}_${
-          data ? JSON.stringify(data) : ''
-        }`
-        const cacheData = cachePool[cacheKey]
-        // 获取当前时间戳
-        const expireTime = new Date().getTime()
-        // 判断缓存池中是否存在已有数据 存在的话 再判断是否过期
-        // 未过期 source.cancel会取消当前的请求 并将内容返回到拦截器的err中
-        if (cacheData && expireTime - cacheData.expire < (_cacheTime || CACHE_TIME)) {
-          source.cancel(cacheData)
+    axios.interceptors.request.use(
+      config => {
+        const {
+          cache,
+          cacheTime: _cacheTime,
+          url,
+          method,
+          params,
+          data
+        } = config;
+        if (cache) {
+          const source = CancelToken.source();
+          config.cancelToken = source.token;
+          // 去缓存池获取缓存数据
+          const cacheKey = `${url}_${method}_${
+            params ? JSON.stringify(params) : ""
+          }_${data ? JSON.stringify(data) : ""}`;
+          const cacheData = cachePool[cacheKey];
+          // 获取当前时间戳
+          const expireTime = new Date().getTime();
+          // 判断缓存池中是否存在已有数据 存在的话 再判断是否过期
+          // 未过期 source.cancel会取消当前的请求 并将内容返回到拦截器的err中
+          if (
+            cacheData &&
+            expireTime - cacheData.expire < (_cacheTime || CACHE_TIME)
+          ) {
+            source.cancel(cacheData);
+          }
         }
+        return requestIntercept ? requestIntercept(config) : config;
+      },
+      err => {
+        return Promise.reject(err);
       }
-      return requestIntercept ? requestIntercept(config) : config
-    }, err => {
-      return Promise.reject(err)
-    })
+    );
 
     // http响应拦截器
-    axios.interceptors.response.use(resp => {
-      if (resp.status && resp.statusText) { // 来自接口的响应
-        const { name, cache, url, method, params, data } = resp.config
-        delete $api.cancelStack[name]
-        if (cache) {
-          // 缓存数据 并将当前时间存入 方便之后判断是否过期
-          const cacheData = {
-            data: resp.data,
-            expire: new Date().getTime()
+    axios.interceptors.response.use(
+      resp => {
+        if (resp.status && resp.config && resp.headers && resp.request) {
+          // 来自接口的响应
+          const { name, cache, url, method, params, data } = resp.config;
+          delete $api.cancelStack[name];
+          if (cache) {
+            // 缓存数据 并将当前时间存入 方便之后判断是否过期
+            const cacheData = {
+              data: resp.data,
+              expire: new Date().getTime()
+            };
+            const cacheKey = `${url}_${method}_${
+              params ? JSON.stringify(params) : ""
+            }_${data || ""}`;
+            cachePool[cacheKey] = cacheData;
           }
-          const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''}_${data ||
-            ''}`
-          cachePool[cacheKey] = cacheData
+          return responseSuccIntercept ? responseSuccIntercept(resp) : resp;
+        } else {
+          // 来自缓存的响应
+          return resp;
         }
-        return responseSuccIntercept ? responseSuccIntercept(resp) : resp
-      } else { // 来自缓存的响应
-        return resp
+      },
+      err => {
+        if (axios.isCancel(err)) return Promise.resolve(err.message?.data);
+        return responseErrorIntercept
+          ? responseErrorIntercept(err)
+          : Promise.reject(err);
       }
-    }, err => {
-      if (axios.isCancel(err)) return Promise.resolve(err.message?.data)
-      return responseErrorIntercept ? responseErrorIntercept(err) : Promise.reject(err)
-    })
+    );
 
     // 发送请求
     const ajax = options => {
-      options = Object.assign({}, options, {
-        name: options['name'] || Math.random().toString(),
-        cancelToken: new axios.CancelToken(c => {
-          $api.cancelStack[options.name] = c
-        })
-      }, options.method === 'delete' ? { transformRequest: null } : {})
-      let currentRoute = router && router.currentRoute
+      options = Object.assign(
+        {},
+        options,
+        {
+          name: options["name"] || Math.random().toString(),
+          cancelToken: new axios.CancelToken(c => {
+            $api.cancelStack[options.name] = c;
+          })
+        },
+        options.method === "delete" ? { transformRequest: null } : {}
+      );
+      let currentRoute = router && router.currentRoute;
       // 扩展不同模块使用不同的baseUrl
       if (currentRoute && hosts) {
         let targetHost = hosts.find(host => {
-          return host.routeKeys.find(routeKey => routeKey === currentRoute.name)
-        })
-        options.baseURL = (targetHost || {}).url || null
+          return host.routeKeys.find(
+            routeKey => routeKey === currentRoute.name
+          );
+        });
+        options.baseURL = (targetHost || {}).url || null;
       }
       return new Promise((resolve, reject) => {
-        axios(options).then(resp => {
-          resolve(resp)
-        }).catch(err => {
-          reject(err)
-        })
-      })
-    }
+        axios(options)
+          .then(resp => {
+            resolve(resp);
+          })
+          .catch(err => {
+            reject(err);
+          });
+      });
+    };
     // 并发请求
     const batchAjax = requestArray => {
       return new Promise((resolve, reject) => {
-        axios.all(requestArray.map(request => request())).then((resp) => {
-          resolve(resp)
-        }).catch(err => {
-          reject(err)
-        })
-      })
-    }
+        axios
+          .all(requestArray.map(request => request()))
+          .then(resp => {
+            resolve(resp);
+          })
+          .catch(err => {
+            reject(err);
+          });
+      });
+    };
 
-    globalAxiosOptions = Object.assign({}, defaultsAxiosOptions, globalAxiosOptions)
+    globalAxiosOptions = Object.assign(
+      {},
+      defaultsAxiosOptions,
+      globalAxiosOptions
+    );
 
     const request = options => {
-      return Array.isArray(options) ? batchAjax(options) : (() => {
-        options = Object.assign({}, globalAxiosOptions, options)
-        return ajax(options)
-      })()
-    }
+      return Array.isArray(options)
+        ? batchAjax(options)
+        : (() => {
+            options = Object.assign({}, globalAxiosOptions, options);
+            return ajax(options);
+          })();
+    };
     const requestWithAliases = (options, method = {}) => {
-      options = Object.assign({}, globalAxiosOptions, options, method)
-      return ajax(options)
-    }
+      options = Object.assign({}, globalAxiosOptions, options, method);
+      return ajax(options);
+    };
     // 注册配置类接口
     const registerMethod = apiConfig => {
       apiConfig.forEach(methodConfig => {
-        const { cache, cacheTime: _cacheTime, url, method, params, data, type } = methodConfig
+        const {
+          cache,
+          cacheTime: _cacheTime,
+          url,
+          method,
+          params,
+          data,
+          type
+        } = methodConfig;
         if (!method) {
-          console.warn(`%c url: ${url}的接口注册未填写method属性，请调整！`, 'font-size:2em')
-          return false
+          console.warn(
+            `%c url: ${url}的接口注册未填写method属性，请调整！`,
+            "font-size:2em"
+          );
+          return false;
         }
         if ($api[methodConfig.method]) {
-          console.warn(`%c 存在重名的接口方法注册(method: ${method})，请调整！`, 'font-size:2em')
-          return false
+          console.warn(
+            `%c 存在重名的接口方法注册(method: ${method})，请调整！`,
+            "font-size:2em"
+          );
+          return false;
         }
         $api[method] = options => {
-          options && options.type && (options.method = options.type)
-          options = Object.assign({}, { cache, cacheTime: _cacheTime, method: type || 'get', url, data, params }, options)
-          return $api(options)
-        }
+          options && options.type && (options.method = options.type);
+          options = Object.assign(
+            {},
+            {
+              cache,
+              cacheTime: _cacheTime,
+              method: type || "get",
+              url,
+              data,
+              params
+            },
+            options
+          );
+          return $api(options);
+        };
         // 扩展url路径型参数请求
         $api[method].restful = options => {
-          options && options.type && (options.method = options.type)
-          options = Object.assign({}, { cache, cacheTime: _cacheTime, method: type || 'get', url, data, params }, options)
-          let unMatchedParams = {}
+          options && options.type && (options.method = options.type);
+          options = Object.assign(
+            {},
+            {
+              cache,
+              cacheTime: _cacheTime,
+              method: type || "get",
+              url,
+              data,
+              params
+            },
+            options
+          );
+          let unMatchedParams = {};
           Object.entries(options.params || {}).forEach(entry => {
-            let val = entry[1]
-            let name = entry[0]
-            var regex = new RegExp(`{${name}}`, 'g')
+            let val = entry[1];
+            let name = entry[0];
+            var regex = new RegExp(`{${name}}`, "g");
             if (regex.test(options.url)) {
-              options.url = options.url.replace(regex, `${val}`)
+              options.url = options.url.replace(regex, `${val}`);
             } else {
-              unMatchedParams[name] = val
+              unMatchedParams[name] = val;
             }
-          })
-          options.params = unMatchedParams
-          return $api(options)
-        }
+          });
+          options.params = unMatchedParams;
+          return $api(options);
+        };
         // 清除缓存
         $api[method].clearCache = () => {
-          const cacheKey = `${url}_${type || 'get'}`
-          Object.keys(cachePool).filter(key => key.indexOf(cacheKey) === 0).forEach(key => delete cachePool[key])
-        }
-        $api[methodConfig.method].config = methodConfig
-      })
-    }
+          const cacheKey = `${url}_${type || "get"}`;
+          Object.keys(cachePool)
+            .filter(key => key.indexOf(cacheKey) === 0)
+            .forEach(key => delete cachePool[key]);
+        };
+        $api[methodConfig.method].config = methodConfig;
+      });
+    };
 
     let $api = options => {
-      return request(options)
-    }
-    apiConfig && registerMethod(apiConfig)
-    $api.cancelStack = {}
+      return request(options);
+    };
+    apiConfig && registerMethod(apiConfig);
+    $api.cancelStack = {};
     $api.cancel = (name, message) => {
       if (name && !$api.cancelStack[name]) {
-        return
+        return;
       }
-      name ? $api.cancelStack[name](message) : Object.values($api.cancelStack).map(c => c(message))
-    }
+      name
+        ? $api.cancelStack[name](message)
+        : Object.values($api.cancelStack).map(c => c(message));
+    };
     // 初始化缓存时间，默认60s
-    CACHE_TIME = cacheTime || 60000
+    CACHE_TIME = cacheTime || 60000;
     // 设置缓存时间(单位ms)
-    $api.setCacheTime = time => (CACHE_TIME = time)
+    $api.setCacheTime = time => (CACHE_TIME = time);
     // 清空缓存
-    $api.clearCache = () => (cachePool = {})
+    $api.clearCache = () => (cachePool = {});
     // 语义化请求
-    $api.request = options => request(options)
+    $api.request = options => request(options);
     $api.get = options => {
-      return requestWithAliases(options, { method: 'get' })
-    }
+      return requestWithAliases(options, { method: "get" });
+    };
     $api.delete = options => {
-      return requestWithAliases(options, { method: 'delete' })
-    }
+      return requestWithAliases(options, { method: "delete" });
+    };
     $api.post = options => {
-      return requestWithAliases(options, { method: 'post' })
-    }
+      return requestWithAliases(options, { method: "post" });
+    };
     $api.put = options => {
-      return requestWithAliases(options, { method: 'put' })
-    }
+      return requestWithAliases(options, { method: "put" });
+    };
     $api.postFile = options => {
-      return requestWithAliases(options, { method: 'post', headers: {'Content-Type': 'multipart/form-data'} })
-    }
+      return requestWithAliases(options, {
+        method: "post",
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+    };
     $api.all = requestArray => {
-      return batchAjax(requestArray)
-    }
+      return batchAjax(requestArray);
+    };
     // 添加全局方法
-    Vue.$api = $api
+    Vue.$api = $api;
     // 添加实例方法
-    Vue.prototype.$api = $api
+    Vue.prototype.$api = $api;
   }
-}
-export default api
+};
+export default api;
