@@ -1,4 +1,5 @@
 ﻿import Vue from 'vue'
+import axios from 'axios'
 // 异步请求插件
 import $api from './vue-x-axios'
 // 加载进度条
@@ -12,17 +13,26 @@ const apiHelper = {
    * @param  {Object} options.router} [description]
    * @return {[Object]}                  [系统配置对象]
    */
-  async register ({ systemConfig, router, requestIntercept, responseSuccIntercept, responseErrorIntercept } = {}) {
+  async register({
+    systemConfig,
+    router,
+    requestIntercept,
+    responseSuccIntercept,
+    responseErrorIntercept
+  } = {}) {
     if (!systemConfig) {
       console.error('请传入接口配置信息！')
       return
     }
     // 异步请求插件注册
     Vue.use($api)
-    if (typeof (systemConfig) === 'string') {
-      systemConfig = (await Vue.$api({
-        systemConfig
-      })).data || {}
+    if (typeof systemConfig === 'string') {
+      systemConfig =
+        (
+          await Vue.$api({
+            systemConfig
+          })
+        ).data || {}
     }
     let { hosts, api, globalAxiosOptions } = systemConfig
     let $apiConfig = {
@@ -43,13 +53,16 @@ const apiHelper = {
       // 响应异常拦截器
       responseErrorIntercept: error => {
         NProgress.done()
+        if (axios.isCancel(error)) return Promise.resolve(error.message?.data)
         return responseErrorIntercept ? responseErrorIntercept(error) : error
       }
     }
-    hosts && hosts.length > 0 && Object.assign($apiConfig, {
-      hosts,
-      router
-    })
+    hosts &&
+      hosts.length > 0 &&
+      Object.assign($apiConfig, {
+        hosts,
+        router
+      })
     Vue.use(Object.assign({}, $api), $apiConfig)
     return systemConfig
   }
