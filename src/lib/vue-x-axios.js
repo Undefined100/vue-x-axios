@@ -298,7 +298,8 @@ let api = {
           method,
           params,
           data,
-          type
+          type,
+          ...rest
         } = methodConfig
         if (!method) {
           console.warn(
@@ -324,7 +325,8 @@ let api = {
               method: type || 'get',
               url,
               data,
-              params
+              params,
+              ...rest
             },
             options
           )
@@ -341,7 +343,8 @@ let api = {
               method: type || 'get',
               url,
               data,
-              params
+              params,
+              ...rest
             },
             options
           )
