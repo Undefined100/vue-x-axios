@@ -1,7 +1,7 @@
 {
   "name": "vue-x-axios",
   "description": "基于axios扩展的Vue异步请求插件，为前端实现API统一管理的解决方案。",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "author": "undefined100 <946424684@qq.com>",
   "license": "MIT",
   "private": false,
@@ -10,6 +10,9 @@
     "src",
     "dist"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
