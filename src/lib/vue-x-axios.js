@@ -1,9 +1,11 @@
 ﻿import Qs from 'qs'
 import axios from 'axios'
 
-let cachePool = {}
-let CACHE_TIME = 60000 // 单位ms
+let cachePool = {} // 缓存池
+let CACHE_TIME = 60000 // 缓存时间，单位ms
 const CancelToken = axios.CancelToken
+
+let apiSignature = [] // 接口签名，用于判断重复接口
 
 const defaultsAxiosOptions = {
   // `url` 是用于请求的服务器 URL
@@ -147,26 +149,26 @@ let api = {
   install: (
     Vue,
     {
-      requestIntercept,
-      responseSuccIntercept,
-      responseErrorIntercept,
-      globalAxiosOptions,
-      apiConfig,
       hosts,
       router,
-      cacheTime
+      apiConfig,
+      cacheTime,
+      globalAxiosOptions,
+      requestIntercept,
+      responseSuccIntercept,
+      responseErrorIntercept
     } = {}
   ) => {
     // http请求拦截器
     axios.interceptors.request.use(
       config => {
         const {
-          cache,
-          cacheTime: _cacheTime,
           url,
           method,
+          data,
           params,
-          data
+          cache,
+          cacheTime: _cacheTime
         } = config
         if (cache) {
           const source = CancelToken.source()
@@ -176,9 +178,8 @@ let api = {
             params ? JSON.stringify(params) : ''
           }_${data ? JSON.stringify(data) : ''}`
           const cacheData = cachePool[cacheKey]
-          // 获取当前时间戳
-          const expireTime = new Date().getTime()
-          // 判断缓存池中是否存在已有数据 存在的话 再判断是否过期
+          const expireTime = new Date().getTime() // 获取当前时间戳
+          // 判断缓存池中是否存在已有数据，存在的话，再判断是否过期
           // 未过期 source.cancel会取消当前的请求 并将内容返回到拦截器的err中
           if (
             cacheData &&
@@ -292,13 +293,14 @@ let api = {
     const registerMethod = apiConfig => {
       apiConfig.forEach(methodConfig => {
         const {
-          cache,
-          cacheTime: _cacheTime,
           url,
-          method,
-          params,
           data,
           type,
+          name,
+          method,
+          params,
+          cache,
+          cacheTime: _cacheTime,
           ...rest
         } = methodConfig
         if (!method) {
@@ -310,10 +312,45 @@ let api = {
         }
         if ($api[methodConfig.method]) {
           console.warn(
-            `%c 存在重名的接口方法注册(method: ${method})，请调整！`,
+            `%c 存在重名的接口方法(method: ${method})，请调整！`,
             'font-size:2em'
           )
           return false
+        }
+        if (process.env.NODE_ENV === 'development') {
+          const signature = `${url}${type}${JSON.stringify(
+            data
+          )}${JSON.stringify(params)}${cache}`
+          const tempSignature = apiSignature.find(
+            item => item.signature === signature
+          )
+          if (tempSignature) {
+            console.warn(`%c 存在重复的接口，请调整！`, 'font-size:2em')
+            console.table([
+              {
+                name,
+                method,
+                url,
+                type,
+                data,
+                params,
+                cache
+              },
+              {
+                name,
+                method: tempSignature.method,
+                url,
+                type,
+                data,
+                params,
+                cache
+              }
+            ])
+          }
+          apiSignature.push({
+            method,
+            signature
+          })
         }
         $api[method] = options => {
           options && options.type && (options.method = options.type)
@@ -371,6 +408,7 @@ let api = {
         }
         $api[methodConfig.method].config = methodConfig
       })
+      apiSignature = null
     }
 
     let $api = options => {
