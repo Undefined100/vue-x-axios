@@ -24,7 +24,7 @@
     "url": "git+https://github.com/Undefined100/vue-x-axios"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "nprogress": "^0.2.0",
     "qs": "^6.5.1",
     "vue": "^2.5.22"
