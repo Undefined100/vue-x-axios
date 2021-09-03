@@ -337,7 +337,7 @@ let api = {
                 cache
               },
               {
-                name,
+                name: tempSignature.name,
                 method: tempSignature.method,
                 url,
                 type,
@@ -348,6 +348,7 @@ let api = {
             ])
           }
           apiSignature.push({
+            name,
             method,
             signature
           })
