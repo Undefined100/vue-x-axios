@@ -386,7 +386,9 @@ let api = {
             },
             options
           )
-          let unMatchedParams = {}
+          let unMatchedParams = {
+            ...options.restfulParams // 需要放在url问号后面的参数上的路径参数
+          }
           Object.entries(options.params || {}).forEach(entry => {
             let val = entry[1]
             let name = entry[0]
