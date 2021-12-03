@@ -207,7 +207,7 @@ this.$api.getUser
 
 最终发起的请求为：/api/v1/getUser/1?age=18，以满足后端接口通过路径来接收参数的场景。
 
-路径参数与 url 参数共存的场景，将参数配置在`restParams`上即可，如：
+路径参数与 url 参数共存的场景，将参数配置在`restfulParams`上即可，如：
 
 ```js
 this.$api.getUser
@@ -216,7 +216,7 @@ this.$api.getUser
       id: 1,
       age: 18
     },
-    restParams: {
+    restfulParams: {
       id: 1
     }
   })
