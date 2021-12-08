@@ -456,10 +456,15 @@ let api = {
     $api.all = requestArray => {
       return batchAjax(requestArray)
     }
-    // 添加全局方法
-    Vue.$api = $api
-    // 添加实例方法
-    Vue.prototype.$api = $api
+
+    if (Vue.version.startsWith('3')) {
+      Vue.config.globalProperties = $api
+    } else {
+      // 添加全局方法
+      Vue.$api = $api
+      // 添加实例方法
+      Vue.prototype.$api = $api
+    }
   }
 }
 export default api
