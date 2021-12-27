@@ -458,7 +458,7 @@ let api = {
     }
 
     if (Vue.version.startsWith('3')) {
-      Vue.config.globalProperties = $api
+      Vue.config.globalProperties.$api = $api
     } else {
       // 添加全局方法
       Vue.$api = $api
