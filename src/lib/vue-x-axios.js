@@ -174,9 +174,8 @@ let api = {
           const source = CancelToken.source()
           config.cancelToken = source.token
           // 去缓存池获取缓存数据
-          const cacheKey = `${url}_${method}_${
-            params ? JSON.stringify(params) : ''
-          }_${data ? JSON.stringify(data) : ''}`
+          const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''
+            }_${data ? JSON.stringify(data) : ''}`
           const cacheData = cachePool[cacheKey]
           const expireTime = new Date().getTime() // 获取当前时间戳
           // 判断缓存池中是否存在已有数据，存在的话，再判断是否过期
@@ -208,9 +207,8 @@ let api = {
               data: resp.data,
               expire: new Date().getTime()
             }
-            const cacheKey = `${url}_${method}_${
-              params ? JSON.stringify(params) : ''
-            }_${data || ''}`
+            const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''
+              }_${data || ''}`
             cachePool[cacheKey] = cacheData
           }
           return responseSuccIntercept ? responseSuccIntercept(resp) : resp
@@ -281,9 +279,9 @@ let api = {
       return Array.isArray(options)
         ? batchAjax(options)
         : (() => {
-            options = Object.assign({}, globalAxiosOptions, options)
-            return ajax(options)
-          })()
+          options = Object.assign({}, globalAxiosOptions, options)
+          return ajax(options)
+        })()
     }
     const requestWithAliases = (options, method = {}) => {
       options = Object.assign({}, globalAxiosOptions, options, method)
@@ -292,6 +290,13 @@ let api = {
     // 注册配置类接口
     const registerMethod = apiConfig => {
       apiConfig.forEach(methodConfig => {
+        if (!methodConfig) {
+          console.warn(
+            `%c 接口注册有误，获取到的接口配置为undefined，请调整！`,
+            'font-size:2em'
+          )
+          return false
+        }
         const {
           url,
           data,
