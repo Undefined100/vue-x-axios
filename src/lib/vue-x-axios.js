@@ -463,6 +463,9 @@ let api = {
     }
 
     if (Vue.version.startsWith('3')) {
+      // 添加全局方法
+      window.$api = $api
+      // 添加实例方法
       Vue.config.globalProperties.$api = $api
     } else {
       // 添加全局方法
