@@ -13,7 +13,7 @@ const apiHelper = {
    * @param  {Object} options.router} [description]
    * @return {[Object]}                  [系统配置对象]
    */
-  async register({
+  async register ({
     systemConfig,
     router,
     requestIntercept,

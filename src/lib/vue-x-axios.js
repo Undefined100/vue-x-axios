@@ -175,7 +175,7 @@ let api = {
           config.cancelToken = source.token
           // 去缓存池获取缓存数据
           const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''
-            }_${data ? JSON.stringify(data) : ''}`
+          }_${data ? JSON.stringify(data) : ''}`
           const cacheData = cachePool[cacheKey]
           const expireTime = new Date().getTime() // 获取当前时间戳
           // 判断缓存池中是否存在已有数据，存在的话，再判断是否过期
@@ -208,7 +208,7 @@ let api = {
               expire: new Date().getTime()
             }
             const cacheKey = `${url}_${method}_${params ? JSON.stringify(params) : ''
-              }_${data || ''}`
+            }_${data || ''}`
             cachePool[cacheKey] = cacheData
           }
           return responseSuccIntercept ? responseSuccIntercept(resp) : resp
