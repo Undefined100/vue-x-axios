@@ -280,6 +280,7 @@ let api = {
         ? batchAjax(options)
         : (() => {
           options = Object.assign({}, globalAxiosOptions, options)
+          options.headers = Object.assign(globalAxiosOptions.headers || {}, options.headers) // 扩展请求头
           return ajax(options)
         })()
     }
