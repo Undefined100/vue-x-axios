@@ -12,7 +12,7 @@ const apiHelper = {
    * @param  {Object} options.router} [description]
    * @return {[Object]}                  [系统配置对象]
    */
-  register (
+  install (
     app,
     {
       systemConfig,
@@ -64,7 +64,7 @@ const apiHelper = {
         router
       })
     app.use(Object.assign({}, $api), $apiConfig)
-    return systemConfig
+    return app
   }
 }
 export default apiHelper
