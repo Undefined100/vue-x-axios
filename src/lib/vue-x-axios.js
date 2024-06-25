@@ -332,7 +332,7 @@ let api = {
           )
           if (tempSignature) {
             console.warn(`%c 存在重复的接口，请调整！`, 'font-size:2em')
-            console.table([
+            console.table && console.table([
               {
                 name,
                 method,
