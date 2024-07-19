@@ -7,6 +7,22 @@ const CancelToken = axios.CancelToken
 
 let apiSignature = [] // 接口签名，用于判断重复接口
 
+// 私有方法列表
+const privateMethods = [
+  'registerMethod',
+  'cancelStack',
+  'cancel',
+  'setCacheTime',
+  'clearCache',
+  'request',
+  'get',
+  'delete',
+  'post',
+  'put',
+  'postFile',
+  'all'
+]
+
 const defaultsAxiosOptions = {
   // `url` 是用于请求的服务器 URL
   // url: '/user',
@@ -316,7 +332,14 @@ let api = {
           )
           return false
         }
-        if ($api[methodConfig.method]) {
+        if (privateMethods.includes(method)) {
+          console.log(
+            `%c 接口方法 ${method}与私有方法名列表[${privateMethods}]中的方法重名，请调整！`,
+            'font-size: 2em'
+          )
+          return false
+        }
+        if ($api[method]) {
           console.warn(
             `%c 存在重名的接口方法(method: ${method})，请调整！`,
             'font-size:2em'
@@ -424,6 +447,7 @@ let api = {
       return request(options)
     }
     apiConfig && registerMethod(apiConfig)
+    $api.registerMethod = registerMethod
     $api.cancelStack = {}
     $api.cancel = (name, message) => {
       if (name && !$api.cancelStack[name]) {
