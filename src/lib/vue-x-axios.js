@@ -1,5 +1,6 @@
 ﻿import Qs from 'qs'
 import axios from 'axios'
+import extend from 'extend'
 
 let cachePool = {} // 缓存池
 let CACHE_TIME = 60000 // 缓存时间，单位ms
@@ -263,12 +264,8 @@ let api = {
       }
       return new Promise((resolve, reject) => {
         axios(options)
-          .then(resp => {
-            resolve(resp)
-          })
-          .catch(err => {
-            reject(err)
-          })
+          .then(resolve)
+          .catch(reject)
       })
     }
     // 并发请求
@@ -304,6 +301,37 @@ let api = {
       options = Object.assign({}, globalAxiosOptions, options, method)
       return ajax(options)
     }
+
+    /**
+     * 扩展接口回退逻辑
+     */
+    const extendFallbackApi = async (options, restful = false, originalOption) => {
+      try {
+        return await $api({...options, errorNotice: false}) // 发起优先接口请求时，关闭提示
+      } catch (error) {
+        // fallbackApi配置的是接注册型接口方法名，并且需要移除优先接口的url信息，然后再发起请求
+        const {fallbackApi, fallbackWhen, url, ...restOptions} = restful ? originalOption : options
+        const responseStatus = error?.response?.status
+        // 配置了回退接口生效条件，fallbackWhen配置的是优先接口的响应状态码数组，只有响应状态码在配置的数组中，才会触发回退接口的请求
+        if (fallbackWhen) {
+          if (fallbackWhen.includes(responseStatus)) {
+            if (restful) {
+              return await $api[options.fallbackApi].restful(restOptions)
+            }
+            return await $api[options.fallbackApi](restOptions)
+          } else {
+            // 回退接口生效条件匹配失败，直接返回优先接口的错误对象
+            return Promise.reject(error)
+          }
+        }
+        // 没有配置回退接口生效条件，则直接发起回退接口请求
+        if (restful) {
+          return await $api[options.fallbackApi].restful(restOptions)
+        }
+        return await $api[options.fallbackApi](restOptions)
+      }
+    }
+
     // 注册配置类接口
     const registerMethod = apiConfig => {
       apiConfig.forEach(methodConfig => {
@@ -382,7 +410,7 @@ let api = {
             signature
           })
         }
-        $api[method] = options => {
+        $api[method] = async (options) => {
           options && options.type && (options.method = options.type)
           options = Object.assign(
             {},
@@ -397,10 +425,14 @@ let api = {
             },
             options
           )
-          return $api(options)
+          if (options.fallbackApi) {
+            return await extendFallbackApi(options)
+          }
+          return await $api(options)
         }
         // 扩展url路径型参数请求
-        $api[method].restful = options => {
+        $api[method].restful = async options => {
+          const originalParams = extend(true, {}, options?.params) // 原始params参数
           options && options.type && (options.method = options.type)
           options = Object.assign(
             {},
@@ -429,7 +461,10 @@ let api = {
             }
           })
           options.params = unMatchedParams
-          return $api(options)
+          if (options.fallbackApi) {
+            return await extendFallbackApi(options, true, {...options, params: originalParams})
+          }
+          return await $api(options)
         }
         // 清除缓存
         $api[method].clearCache = () => {
@@ -443,9 +478,7 @@ let api = {
       apiSignature = null
     }
 
-    let $api = options => {
-      return request(options)
-    }
+    let $api = options => request(options)
     apiConfig && registerMethod(apiConfig)
     $api.registerMethod = registerMethod
     $api.cancelStack = {}
