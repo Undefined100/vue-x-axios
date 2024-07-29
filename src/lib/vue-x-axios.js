@@ -10,6 +10,7 @@ let apiSignature = [] // 接口签名，用于判断重复接口
 
 // 私有方法列表
 const privateMethods = [
+  'deleteMethod',
   'registerMethod',
   'cancelStack',
   'cancel',
@@ -481,6 +482,21 @@ let api = {
     let $api = options => request(options)
     apiConfig && registerMethod(apiConfig)
     $api.registerMethod = registerMethod
+    $api.deleteMethod = methods => {
+      if (methods === undefined) {
+        // 删除全部配置型接口
+        Object.keys($api).forEach(m => {
+          // 排除掉私有方法
+          !privateMethods.includes(m) && delete $api[m]
+        })
+      } else if (Array.isArray(methods)) {
+        // 删除指定方法名的配置型接口
+        methods.forEach(m => {
+          delete $api[m]
+          delete $api[m].restful
+        })
+      }
+    }
     $api.cancelStack = {}
     $api.cancel = (name, message) => {
       if (name && !$api.cancelStack[name]) {
