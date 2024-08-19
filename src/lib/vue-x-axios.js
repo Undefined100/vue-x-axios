@@ -351,7 +351,7 @@ let api = {
         }
         $api[methodConfig.method].config = methodConfig
       })
-      apiSignature = null
+      apiSignature = []
     }
 
     let $api = options => request(options)
@@ -368,7 +368,6 @@ let api = {
         // 删除指定方法名的配置型接口
         methods.forEach(m => {
           delete $api[m]
-          delete $api[m].restful
         })
       }
     }
