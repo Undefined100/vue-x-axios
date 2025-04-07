@@ -248,6 +248,13 @@ let api = {
             `%c 存在重名的接口方法(method: ${method})，请调整！`,
             'font-size:2em'
           )
+          if (process.env.NODE_ENV === 'development') {
+            Vue.$confirm2?.error?.(`存在重名的接口方法(method: ${method})，会导致业务接口请求错误问题，请务必调整！<br>如果是基座与微应用的场景，请参考<a target="_blank" href="http://172.18.166.139:31034/micro-app/constraint#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">文档</a>。`, '提示', {
+              showClose: false,
+              showCancelButton: false,
+              showConfirmButton: false
+            })
+          }
           return false
         }
         if (process.env.NODE_ENV === 'development') {
@@ -279,6 +286,11 @@ let api = {
                 cache
               }
             ])
+            Vue.$confirm2?.error?.(`存在重复的接口：${url}，请调整！<br>如果是基座与微应用的场景，请参考<a target="_blank" href="http://172.18.166.139:31034/micro-app/constraint#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">文档</a>。`, '提示', {
+              showClose: false,
+              showCancelButton: false,
+              showConfirmButton: false
+            })
           }
           apiSignature.push({
             name,
